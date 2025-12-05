@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>户口查询 - Why u LOOK me?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", sans-serif;
+        }
+        body {
+            max-width: 765px;
+            margin: 0 auto;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        /* 顶部导航栏 */
+        .page-header {
+            height: 33px;
+            line-height: 33px;
+            background: #2f5496;
+            color: #fff;
+            padding: 0 15px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .page-header img {
+            height: 24px;
+            width: 24px;
+        }
+        /* 输入区域 */
+        .input-area {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .input-area label {
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+        .input-area input {
+            flex: 1;
+            min-width: 200px;
+            height: 36px;
+            padding: 0 10px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .input-area button {
+            width: 95px;
+            height: 48px;
+            font-size: 13px;
+            background: #2f5496;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .input-area button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        /* 分割线 */
+        .divider {
+            height: 1px;
+            background: #ddd;
+            margin: 15px 0;
+        }
+        /* 信息展示区域 */
+        .info-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .info-group {
+            flex: 1;
+            min-width: 250px;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            gap: 15px;
+        }
+        .info-item label {
+            font-size: 15px;
+            color: #333;
+            width: 80px;
+            text-align: right;
+        }
+        .info-item input {
+            flex: 1;
+            height: 36px;
+            padding: 0 10px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f5f5f5;
+            cursor: default;
+        }
+        /* 头像区域 */
+        .avatar-area {
+            width: 180px;
+            height: 220px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .avatar-area img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        /* 标签页 */
+        .tabs {
+            margin: 20px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-pages {
+            display: flex;
+            gap: 5px;
+        }
+        .tab-page {
+            padding: 8px 15px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .tab-page.active {
+            background: #fff;
+            border-top: 2px solid #2f5496;
+        }
+        /* 加载动画 */
+        .spin {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: #2f5496;
+            font-size: 12px;
+        }
+        .spin .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #eee;
+            border-top: 5px solid #2f5496;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 弹窗样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .modal-content {
+            background: #fff;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .modal-header {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #d9534f;
+        }
+        .modal-body {
+            font-size: 10px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .modal-footer button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        .modal-footer .btn-ok {
+            background: #2f5496;
+            color: #fff;
+        }
+        .modal-footer .btn-cancel {
+            background: #ccc;
+            color: #333;
+        }
+        /* 提示框 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 15px 25px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 10001;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="spin" id="spin">
+        <div class="loader"></div>
+        <div id="spinText">正在等待登录凭据</div>
+    </div>
+
+    <!-- 顶部导航 -->
+    <div class="page-header">
+        <img src="data:image/png;base64,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" alt="图标">
+        <span>户口查询</span>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="input-area">
+        <label for="Iinput" class="LTipInput">请输入姓名或身份证号</label>
+        <input type="text" id="Iinput" placeholder="输入查询内容">
+        <button id="BStart">查询</button>
+    </div>
+
+    <!-- 分割线 -->
+    <div class="divider"></div>
+
+    <!-- 信息展示区域 -->
+    <div class="info-area">
+        <div class="info-group">
+            <div class="info-item">
+                <label for="IName">姓名</label>
+                <input type="text" id="IName" readonly>
+            </div>
+            <div class="info-item">
+                <label for="IGender">性别</label>
+                <input type="text" id="IGender" readonly>
+            </div>
+            <div class="info-item">
+                <label for="IAge">年龄</label>
+                <input type="text" id="IAge" readonly>
+            </div>
+            <div class="info-item">
+                <label for="IID">身份证号</label>
+                <input type="text" id="IID" readonly>
+            </div>
+            <div class="info-item">
+                <label for="ITel1">联系电话1</label>
+                <input type="text" id="ITel1" readonly>
+            </div>
+            <div class="info-item">
+                <label for="ITel2">联系电话2</label>
+                <input type="text" id="ITel2" readonly>
+            </div>
+            <div class="info-item">
+                <label for="IAddress">家庭地址</label>
+                <input type="text" id="IAddress" readonly>
+            </div>
+        </div>
+        <div class="avatar-area">
+            <img id="IAvator" src="" alt="头像">
+        </div>
+    </div>
+
+    <!-- 标签页 -->
+    <div class="tabs">
+        <div class="tab-pages" id="tabPages">
+            <!-- 标签页动态生成 -->
+        </div>
+    </div>
+
+    <!-- 弹窗（使用条款） -->
+    <div class="modal" id="termsModal">
+        <div class="modal-content">
+            <div class="modal-header">警告</div>
+            <div class="modal-body">
+                你是否同意该软件的使用条款？<br><br>
+                1. 请勿传播、复制应用程序目录的任何文件和数据。<br>
+                2. 以此带来的法律责任将由使用者承担, 与开发者无关。
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelTerms">不同意, 我选择退出</button>
+                <button class="btn-ok" id="agreeTerms">我同意</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗（免责声明） -->
+    <div class="modal" id="disclaimerModal">
+        <div class="modal-content">
+            <div class="modal-header">免责声明</div>
+            <div class="modal-body">
+                本软件仅供合法用途使用，用户需自行承担使用本软件所带来的一切法律责任。开发者不对因使用本软件而产生的任何直接或间接损失负责。<br><br>
+                本产品不对中国大陆和港澳台区域开放使用<br><br>
+                请确保您在使用本软件时遵守当地国家/地区法律法规。
+            </div>
+            <div class="modal-footer">
+                <button class="btn-ok" id="confirmDisclaimer">我已知晓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 全局变量（还原C#全局状态）
+        let users = [];
+        const avatarDict = new Map();
+        const dataPath = "data.obj";
+        const dataAvatorPath = "data_avator.obj";
+        let decryptedContent = "";
+        let avatarDecryptedContent = "";
+        let isHeadExists = false;
+        const version = "1.0.0"; // 可自定义版本号
+
+        // DOM元素
+        const spin = document.getElementById("spin");
+        const spinText = document.getElementById("spinText");
+        const Iinput = document.getElementById("Iinput");
+        const BStart = document.getElementById("BStart");
+        const IName = document.getElementById("IName");
+        const IGender = document.getElementById("IGender");
+        const IAge = document.getElementById("IAge");
+        const IID = document.getElementById("IID");
+        const ITel1 = document.getElementById("ITel1");
+        const ITel2 = document.getElementById("ITel2");
+        const IAddress = document.getElementById("IAddress");
+        const IAvator = document.getElementById("IAvator");
+        const tabPages = document.getElementById("tabPages");
+        const termsModal = document.getElementById("termsModal");
+        const disclaimerModal = document.getElementById("disclaimerModal");
+        const toast = document.getElementById("toast");
+
+        // 初始化（还原Form1构造函数逻辑）
+        window.onload = async function() {
+            // 显示加载动画
+            spin.style.display = "flex";
+            spinText.textContent = "正在加载...";
+
+            // 模拟管理员权限检测（前端无实际权限，仅做提示）
+            if (!isAdministrator()) {
+                showToast("当前未以管理员权限运行，部分功能可能受限");
+            }
+
+            // 设置页面标题
+            document.title = `DONT SPREAD THIS SOFTWARE - ${version}`;
+
+            // 显示使用条款弹窗
+            termsModal.style.display = "flex";
+
+            // 监听条款同意事件
+            document.getElementById("agreeTerms").addEventListener("click", async function() {
+                termsModal.style.display = "none";
+                // 显示免责声明
+                disclaimerModal.style.display = "flex";
+
+                // 监听免责声明确认事件
+                document.getElementById("confirmDisclaimer").addEventListener("click", async function() {
+                    disclaimerModal.style.display = "none";
+                    spinText.textContent = "正在加载中......";
+
+                    // 模拟身份验证（前端仅做占位）
+                    const isAuthenticated = await authentication();
+                    if (!isAuthenticated) {
+                        spinText.textContent = "验证失败，程序即将退出...";
+                        spin.style.color = "red";
+                        setTimeout(() => window.close(), 5000);
+                        return;
+                    }
+
+                    // 检查头像文件是否存在（localStorage模拟文件存在性）
+                    isHeadExists = localStorage.getItem(dataAvatorPath) !== null;
+
+                    // 加载数据
+                    await loadAndCache();
+                    if (isHeadExists) {
+                        await loadAvatarCache();
+                    } else {
+                        showToast("头像文件不存在，将不加载头像信息");
+                    }
+
+                    // 隐藏加载动画，启用UI
+                    spin.style.display = "none";
+                    enableUI();
+
+                    // 绑定查询按钮事件
+                    BStart.addEventListener("click", bStartClick);
+                    // 绑定回车事件
+                    Iinput.addEventListener("keypress", function(e) {
+                        if (e.key === "Enter") bStartClick();
+                    });
+                });
+            });
+
+            // 监听条款拒绝事件
+            document.getElementById("cancelTerms").addEventListener("click", function() {
+                spinText.textContent = "用户不同意使用条款，程序即将退出...";
+                spin.style.color = "red";
+                setTimeout(() => window.close(), 5000);
+            });
+        };
+
+        // 模拟管理员权限检测（前端无法真正获取，仅做提示）
+        function isAdministrator() {
+            return true; // 前端默认返回true，实际场景可根据需求调整
+        }
+
+        // 模拟身份验证
+        async function authentication() {
+            // 模拟延迟
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return true; // 前端默认通过验证
+        }
+
+        // 加载并缓存数据（还原LoadAndCache方法）
+        async function loadAndCache() {
+            try {
+                // 从localStorage获取模拟加密数据（实际使用时需替换为真实数据）
+                const encryptedData = localStorage.getItem(dataPath);
+                if (!encryptedData) {
+                    throw new Error("户口信息文件不存在！");
+                }
+
+                // 解密流程：base64 -> 十六进制字符串 -> 原始内容
+                const decodedBytes = atob(encryptedData);
+                const hexContent = decodeURIComponent(escape(decodedBytes));
+                decryptedContent = restoreFromHex(hexContent);
+
+                // 解析用户数据
+                users = readData();
+                showToast(`已加载 ${users.length} 条用户信息`);
+            } catch (ex) {
+                showToast(`加载数据失败：${ex.message}`, "error");
+                decryptedContent = "";
+            }
+        }
+
+        // 加载头像缓存（还原LoadAvatarCache方法）
+        async function loadAvatarCache() {
+            try {
+                const encryptedData = localStorage.getItem(dataAvatorPath);
+                if (!encryptedData) {
+                    throw new Error("头像文件不存在");
+                }
+
+                // 解密流程
+                const decodedBytes = atob(encryptedData);
+                const hexContent = decodeURIComponent(escape(decodedBytes));
+                avatarDecryptedContent = restoreFromHex(hexContent);
+
+                // 解析头像数据
+                const lines = avatarDecryptedContent.split(/\r?\n/).filter(line => line.trim());
+                lines.forEach(line => {
+                    const parts = line.split(',');
+                    if (parts.length >= 2) {
+                        const idCard = parts[0].trim().toLowerCase();
+                        const avatarData = parts[1].trim();
+                        if (!avatarDict.has(idCard)) {
+                            avatarDict.set(idCard, avatarData);
+                        }
+                    }
+                });
+
+                showToast(`已加载 ${avatarDict.size} 条头像信息`);
+            } catch (ex) {
+                showToast(`加载头像失败：${ex.message}`, "error");
+                avatarDict.clear();
+            }
+        }
+
+        // 从十六进制字符串还原内容（还原RestoreFromHex方法）
+        function restoreFromHex(hexContent) {
+            if (!hexContent) return "";
+            const rows = hexContent.split('\n');
+            const restoredCsv = [];
+            rows.forEach(row => {
+                const cells = row.split(',');
+                const restoredRow = cells.map(cell => hexToString(cell)).join(',');
+                restoredCsv.push(restoredRow);
+            });
+            return restoredCsv.join('\n');
+        }
+
+        // 十六进制转字符串（还原HexToString方法）
+        function hexToString(hex) {
+            if (!hex || hex.length % 2 !== 0) return "";
+            let str = "";
+            for (let i = 0; i < hex.length; i += 2) {
+                const hexPair = hex.substr(i, 2);
+                const byte = parseInt(hexPair, 16);
+                str += String.fromCharCode(byte);
+            }
+            return str;
+        }
+
+        // 读取用户数据（还原ReadData方法）
+        function readData() {
+            const userList = [];
+            if (!decryptedContent) return userList;
+
+            const data = decryptedContent.split(/\r?\n/).filter(line => line.trim());
+            data.forEach((line, index) => {
+                const lineTrim = line.trim();
+                // 跳过标题行
+                if (lineTrim.startsWith("班级") || lineTrim.startsWith("姓名")) return;
+                if (!lineTrim) return;
+
+                const parts = lineTrim.split(',');
+                if (parts.length < 5) {
+                    showToast(`第 ${index + 1} 行缺少必要字段：${lineTrim}`, "warning");
+                    return;
+                }
+
+                const className = parts[0];
+                const name = parts[1];
+                const id = parts[4];
+
+                if (!id || id.trim() === "") {
+                    showToast(`第 ${index + 1} 行身份证号为空！`, "warning");
+                    return;
+                }
+
+                // 解析联系电话
+                let tel1 = null;
+                if (parts.length > 2 && parts[2].trim()) tel1 = parts[2].trim();
+                else if (parts.length > 3 && parts[3].trim()) tel1 = parts[3].trim();
+                else if (parts.length > 5 && parts[5].trim()) tel1 = parts[5].trim();
+
+                let tel2 = null;
+                if (parts.length > 3 && parts[3].trim()) tel2 = parts[3].trim();
+                else if (parts.length > 5 && parts[5].trim()) tel2 = parts[5].trim();
+
+                const address = parts.length > 6 && parts[6].trim() ? parts[6].trim() : null;
+                let age = null;
+
+                // 身份证验证和年龄计算
+                if (id.length !== 18) {
+                    showToast(`第 ${index + 1} 行身份证号格式错误！`, "warning");
+                    return;
+                }
+                if (isValidIdCard(id)) {
+                    age = getAge(id).toString();
+                } else {
+                    showToast(`第 ${index + 1} 行可能不是身份证号`, "warning");
+                    age = "未知";
+                }
+
+                userList.push({
+                    Class: className,
+                    Name: name,
+                    ID: id,
+                    Tel_1: tel1,
+                    Tel_2: tel2,
+                    Age: age,
+                    Address: address
+                });
+            });
+
+            return userList;
+        }
+
+        // 身份证验证（还原IsValidIdCard方法）
+        function isValidIdCard(id) {
+            // 简化验证逻辑，实际可扩展完整身份证校验规则
+            if (id.length !== 18) return false;
+            const birthYear = parseInt(id.substr(6, 4));
+            return birthYear >= 1900 && birthYear <= new Date().getFullYear();
+        }
+
+        // 计算年龄（还原GetAge方法）
+        function getAge(id) {
+            const birthYear = parseInt(id.substr(6, 4));
+            const currentYear = new Date().getFullYear();
+            return currentYear - birthYear;
+        }
+
+        // 判断性别（还原IsMan方法）
+        function isMan(id) {
+            const genderCode = parseInt(id.substr(16, 1));
+            return genderCode % 2 === 1;
+        }
+
+        // 查询按钮点击事件（还原BStart_Click方法）
+        function bStartClick() {
+            disableUI();
+            clearUI();
+
+            try {
+                const input = Iinput.value.trim();
+                if (!input) {
+                    showToast("请输入户口信息！", "error");
+                    enableUI();
+                    return;
+                }
+                if (input.length >= 5) {
+                    showToast("输入的值不属于姓名或身份证", "error");
+                    enableUI();
+                    return;
+                }
+
+                // 搜索用户
+                const ingList = searchUser(users, input);
+                if (ingList.length > 0) {
+                    let text = `共找到 ${ingList.length} 个匹配用户：\n\n`;
+                    const resultCount = ingList.length;
+
+                    // 清空标签页
+                    tabPages.innerHTML = "";
+
+                    // 创建标签页和用户信息
+                    ingList.forEach((user, index) => {
+                        text += `===========第 ${index + 1} 条信息=============\n` +
+                                `姓名: ${user.Name}\n` +
+                                `年龄: ${user.Age}\n` +
+                                `性别: ${isMan(user.ID) ? "男" : "女"}\n` +
+                                `身份证号: ${user.ID}\n` +
+                                `联系电话1: ${user.Tel_1 || "无"}\n` +
+                                `联系电话2: ${user.Tel_2 || "无"}\n` +
+                                `户籍地址: ${user.Address || "无"}\n` +
+                                `============End...============\n`;
+
+                        // 创建标签页
+                        const tabPage = document.createElement("div");
+                        tabPage.className = "tab-page";
+                        tabPage.textContent = index + 1;
+                        tabPage.dataset.index = index;
+                        tabPages.appendChild(tabPage);
+
+                        // 标签页点击事件
+                        tabPage.addEventListener("click", function() {
+                            document.querySelectorAll(".tab-page").forEach(tab => tab.classList.remove("active"));
+                            this.classList.add("active");
+                            const selectedUser = ingList[parseInt(this.dataset.index)];
+                            updateUserInfo(selectedUser);
+                            if (resultCount <= 2) {
+                                loadAndDisplayAvatar(selectedUser.ID);
+                            }
+                        });
+                    });
+
+                    // 显示第一条数据
+                    document.querySelectorAll(".tab-page")[0]?.classList.add("active");
+                    updateUserInfo(ingList[0]);
+                    if (resultCount <= 2) {
+                        loadAndDisplayAvatar(ingList[0].ID);
+                    }
+
+                    showToast(text);
+                } else {
+                    showToast("未找到匹配的用户", "warning");
+                }
+
+                enableUI();
+            } catch (ex) {
+                showToast(`查询失败：${ex.message}`, "error");
+                enableUI();
+            }
+        }
+
+        // 搜索用户（还原SearchUser方法）
+        function searchUser(userList, keyword) {
+            if (!userList || !keyword) return [];
+            const lowerKeyword = keyword.trim().toLowerCase();
+            return userList.filter(u => 
+                (u.Name && u.Name.trim().toLowerCase() === lowerKeyword) ||
+                (u.ID && u.ID.trim().toLowerCase() === lowerKeyword)
+            );
+        }
+
+        // 更新用户信息（还原UpdateUserInfo方法）
+        function updateUserInfo(user) {
+            IName.value = user.Name || "";
+            IGender.value = isMan(user.ID) ? "男" : "女";
+            IAge.value = user.Age || "";
+            IID.value = user.ID || "";
+            ITel1.value = user.Tel_1 || "";
+            ITel2.value = user.Tel_2 || "";
+            IAddress.value = user.Address || "";
+        }
+
+        // 加载并显示头像（还原LoadAndDisplayAvatar方法）
+        function loadAndDisplayAvatar(idCard) {
+            try {
+                const encryptedAvatar = avatarDict.get(idCard.toLowerCase());
+                if (encryptedAvatar) {
+                    // 解密头像：base64 -> 十六进制字符串 -> 字节数组 -> 图片
+                    const base64Decoded = atob(encryptedAvatar);
+                    const hexString = decodeURIComponent(escape(base64Decoded));
+                    const avatarBytes = hexToBytes(hexString);
+                    
+                    // 字节数组转图片URL
+                    const blob = new Blob([avatarBytes], { type: "image/png" });
+                    const imageUrl = URL.createObjectURL(blob);
+                    IAvator.src = imageUrl;
+                    showToast(`已加载用户 ${idCard} 的头像`);
+                } else {
+                    IAvator.src = "";
+                    showToast(`未找到用户 ${idCard} 的头像信息`);
+                }
+            } catch (ex) {
+                IAvator.src = "";
+                showToast(`加载头像失败：${ex.message}`, "error");
+            }
+        }
+
+        // 十六进制转字节数组（还原HexToBytes方法）
+        function hexToBytes(hex) {
+            if (!hex || hex.length % 2 !== 0) return new Uint8Array(0);
+            const bytes = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < bytes.length; i++) {
+                bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+            }
+            return bytes;
+        }
+
+        // 清空UI（还原ClearUI方法）
+        function clearUI() {
+            IName.value = "";
+            IGender.value = "";
+            IAge.value = "";
+            IID.value = "";
+            ITel1.value = "";
+            ITel2.value = "";
+            IAddress.value = "";
+            IAvator.src = "";
+            tabPages.innerHTML = "";
+        }
+
+        // 禁用UI（还原DisableUI方法）
+        function disableUI() {
+            BStart.disabled = true;
+            Iinput.disabled = true;
+            IName.disabled = true;
+            IGender.disabled = true;
+            IAge.disabled = true;
+            IID.disabled = true;
+            ITel1.disabled = true;
+            ITel2.disabled = true;
+            IAddress.disabled = true;
+        }
+
+        // 启用UI（还原EnableUI方法）
+        function enableUI() {
+            BStart.disabled = false;
+            Iinput.disabled = false;
+            IName.disabled = false;
+            IGender.disabled = false;
+            IAge.disabled = false;
+            IID.disabled = false;
+            ITel1.disabled = false;
+            ITel2.disabled = false;
+            IAddress.disabled = false;
+        }
+
+        // 显示提示框（还原MessageBox_I）
+        function showToast(message, type = "info") {
+            toast.textContent = message;
+            toast.style.display = "block";
+            
+            // 不同类型不同样式
+            if (type === "error") {
+                toast.style.background = "rgba(220,53,69,0.7)";
+            } else if (type === "warning") {
+                toast.style.background = "rgba(255,193,7,0.7)";
+            } else {
+                toast.style.background = "rgba(0,0,0,0.7)";
+            }
+
+            // 3秒后隐藏
+            setTimeout(() => {
+                toast.style.display = "none";
+            }, 3000);
+        }
+
+        // 测试数据生成（实际使用时替换为真实数据）
+        function generateTestData() {
+            // 模拟加密的用户数据
+            const testUsers = [
+                "班级1,张三,13800138000,,110101199001011234,,,北京市朝阳区",
+                "班级2,李四,13900139000,,120101199505056789,,,上海市浦东新区"
+            ];
+            // 加密流程：原始内容 -> 十六进制字符串 -> base64
+            const hexUsers = testUsers.map(line => {
+                return line.split('').map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+            }).join(',\n');
+            const base64Users = btoa(unescape(encodeURIComponent(hexUsers)));
+            localStorage.setItem(dataPath, base64Users);
+
+            // 模拟加密的头像数据
+            const testAvatars = [
+                "110101199001011234,/9j/4AAQSkZJRgABAQEAYABgAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2ODApLCBxdWFsaXR5ID0gOTAK/9sAQwADAgIDAgIDAwMDBAMDBAUIBQUEBAUKBwcGCAwKDAwLCgsLDQ4SEA0OEQ4LCxAWEBETFBUVFQwPFxgWFBgSFBUU/9sAQwEDBAQFBAUJBQUJFA0LDRQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU/8AAEQgBLAEsAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8A+ADQoIaKKKKAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKK
